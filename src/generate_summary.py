@@ -65,7 +65,8 @@ def getArgs(
     test_from="",
     report_rouge=False,
     block_trigram=True,
-    source_data=""
+    source_data="",
+    top_n_sentences=3
 ):
 
     args = {}
@@ -104,6 +105,8 @@ def getArgs(
     args["block_trigram"] = block_trigram
 
     args["source_data"] = source_data
+    args["top_n_sentences"] = top_n_sentences
+    
 
     class Args():
         def __init__(self, attrs):
@@ -156,7 +159,7 @@ def generate_summary(args, step=100):
     example = get_input_data(source_data, device, args.use_interval)
     trainer = get_trainer(args)
 
-    return trainer.example_api(example=example, step=step, device=device)
+    return trainer.example_api(example=example,top_n_sentences=args.top_n_sentences, step=step, device=device)
     
 
 
@@ -219,7 +222,8 @@ if __name__ == "__main__":
     parser.add_argument("-block_trigram", type=str2bool,
                         nargs="?", const=True, default=True)
     parser.add_argument("-source_data", default="")
-
+    parser.add_argument("-top_n_sentences", default=3)
+    
 
     args = parser.parse_args()
     args.gpu_ranks = [int(i) for i in args.gpu_ranks.split(",")]
@@ -227,8 +231,4 @@ if __name__ == "__main__":
     result = generate_summary(args)
     print(result)
 
-
-
-
-
-
+    
