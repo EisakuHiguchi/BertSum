@@ -253,17 +253,25 @@ def train(args, device_id):
         return data_loader.Dataloader(args, load_dataset(args, 'train', shuffle=True), args.batch_size, device,
                                                  shuffle=True, is_test=False)
 
-    model = Summarizer(args, device, load_pretrained_bert=True)
+    config = BertConfig.from_json_file(args.bert_config_path)
+    model = Summarizer(args, device, load_pretrained_bert=args.restore_train, bert_config=config)
     if args.train_from != '':
         logger.info('Loading checkpoint from %s' % args.train_from)
         checkpoint = torch.load(args.train_from,
                                 map_location=lambda storage, loc: storage)
-        opt = vars(checkpoint['opt'])
-        for k in opt.keys():
-            if (k in model_flags):
-                setattr(args, k, opt[k])
-        model.load_cp(checkpoint)
-        optim = model_builder.build_optim(args, model, checkpoint)
+        if args.use_pretrain_model:
+            checkpoint = {"model": checkpoint}
+            checkpoint["opt"] = args
+            args.train_from = ""
+            optim = model_builder.build_optim(args, model, None)
+            print("hoge")
+        else:    
+            opt = vars(checkpoint['opt'])
+            for k in opt.keys():
+                if (k in model_flags):
+                    setattr(args, k, opt[k])
+            model.load_cp(checkpoint)
+            optim = model_builder.build_optim(args, model, checkpoint)
     else:
         optim = model_builder.build_optim(args, model, None)
 
@@ -325,6 +333,10 @@ if __name__ == '__main__':
     parser.add_argument("-train_from", default='')
     parser.add_argument("-report_rouge", type=str2bool, nargs='?',const=True,default=True)
     parser.add_argument("-block_trigram", type=str2bool, nargs='?', const=True, default=True)
+    
+    parser.add_argument("-use_pretrain_model", type=str2bool, default=False)
+    parser.add_argument("-restore_train", type=str2bool, default=False)
+    
 
     args = parser.parse_args()
     args.gpu_ranks = [int(i) for i in args.gpu_ranks.split(',')]
