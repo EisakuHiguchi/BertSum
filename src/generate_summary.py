@@ -229,6 +229,6 @@ if __name__ == "__main__":
     args.gpu_ranks = [int(i) for i in args.gpu_ranks.split(",")]
     
     result = generate_summary(args)
-    print(result)
+    print(result["predicted_summary"])
 
     
